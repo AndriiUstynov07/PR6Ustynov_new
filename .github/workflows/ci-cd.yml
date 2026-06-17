@@ -1,0 +1,45 @@
+name: PR6 CI/CD Pipeline
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      # Обов'язковий крок, який виправляє права доступу прямо на сервері Linux
+      - name: Make gradlew executable
+        run: chmod +x gradlew
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+          cache: 'gradle'
+
+      # Крок 1: Статичний аналіз коду (Checkstyle)
+      - name: Run Checkstyle
+        run: ./gradlew checkstyleMain checkstyleTest
+
+      # Крок 2: Запуск тестів (JUnit 6)
+      - name: Run JUnit 6 Tests
+        run: ./gradlew test
+
+      # Крок 3: Збирання проєкту в jar
+      - name: Build JAR
+        run: ./gradlew assemble
+
+      # Крок 4: Збереження готового JAR-файлу як артефакту
+      - name: Upload JAR Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: PR6-JAR
+          path: build/libs/*.jar
